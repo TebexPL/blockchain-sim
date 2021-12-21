@@ -7,7 +7,7 @@ import Block from './Block';
 
 import { sha256 } from 'js-sha256';
 
-const maxSlowdown=10000;
+const maxSlowdown=5000;
 
 
 class App extends Component {
@@ -90,10 +90,7 @@ class App extends Component {
     this.setState({});
   }
 
-  updateSlowdown(){
-    let value = maxSlowdown-document.getElementById('speedSlider').value;
-    this.setState({slowdown: value});
-  }
+
 
 
   constructor(props){
@@ -111,7 +108,6 @@ class App extends Component {
     this.cost = this.cost.bind(this);
     this.updateState = this.updateState.bind(this);
     this.newMiner = this.newMiner.bind(this);
-    this.updateSlowdown = this.updateSlowdown.bind(this);
   }
 
 
@@ -137,7 +133,7 @@ class App extends Component {
   container={
     display: 'flex',
     flexDirection: 'row',
-    height: '90%',
+    height: '100%',
     backgroundColor: 'silver',
   };
 
@@ -166,7 +162,6 @@ class App extends Component {
 
     return (
       <div style={this.mainContainer}>
-        <input id='speedSlider' type="range" min={0} max={maxSlowdown} defaultValue={100} onInput={this.updateSlowdown}/>
         <div  style={this.container}>
           <ReactSlider />
           <div style={this.columnContainer}>
