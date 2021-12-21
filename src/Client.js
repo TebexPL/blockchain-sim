@@ -1,4 +1,5 @@
 import {Component} from 'react';
+const poissonProcess = require('poisson-process');
 
 
 
@@ -8,10 +9,18 @@ class Client extends Component {
   constructor(props){
     super(props);
     this.generateTransaction = this.generateTransaction.bind(this);
-    setTimeout(this.generateTransaction, Math.random()*5000);
+  }
+
+  componentDidMount(){
+    this.generateTransaction();
+  }
+
+  sleep(ms) {
+    return new Promise(resolve => setTimeout(resolve, ms));
   }
 
   generateTransaction = async () => {
+    await this.sleep(poissonProcess.sample(this.props.slowdown));
     const clients = this.props.clients;
     const data = this.props.data;
     let recipient = {};
@@ -24,7 +33,7 @@ class Client extends Component {
                        senderId: data.id,
                        amount: amount}
     this.props.newTransaction(transaction);
-    setTimeout(this.generateTransaction, Math.random()*5000);
+    setTimeout(this.generateTransaction, 100);
   }
 
   render() {

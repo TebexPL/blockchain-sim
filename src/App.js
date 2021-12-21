@@ -1,9 +1,14 @@
 import {Component} from 'react';
+import ReactSlider from 'react-slider';
 import Client from './Client';
 import Miner from './Miner';
 import Transaction from './Transaction';
+import Block from './Block';
 
 import { sha256 } from 'js-sha256';
+
+const maxSlowdown=10000;
+
 
 class App extends Component {
 
@@ -33,7 +38,6 @@ class App extends Component {
     for(let i=0; i<num; i++)
       arr.push(this.createMiner());
     return arr;
-
   }
 
 
@@ -48,22 +52,93 @@ class App extends Component {
     this.setState({});
   }
 
+  newBlock(minerId, block){
+    this.state.blockchain.push(block);
+    let miner = this.state.miners
+    .find(x => x.id === minerId);
+    if(miner !== undefined){
+      miner.balance += block.transactions[block.transactions.length-1]
+            .amount
+      this.setState({});
+    }
+
+
+  }
+
+  cost(minerId){
+    let miner = this.state.miners
+          .find(x => x.id === minerId)
+    if(miner !== undefined){
+      miner.balance -= miner.resources;
+      if(miner.balance <=0){
+        let minerIndex = this.state.miners
+              .findIndex(x => x.id === minerId)
+        this.state.miners.splice(minerIndex, 1);
+      }
+      this.setState({});
+    }
+
+  }
+
+  updateState(){
+    this.setState({});
+  }
+
+
+  newMiner(){
+    this.state.miners.push(this.createMiner());
+    this.setState({});
+  }
+
+  updateSlowdown(){
+    let value = maxSlowdown-document.getElementById('speedSlider').value;
+    this.setState({slowdown: value});
+  }
+
+
   constructor(props){
     super(props);
     this.state = {
-      clients: this.createClients(5),
-      miners: this.createMiners(5),
-      transactions: []
+      clients: [],
+      miners: [],
+      transactions: [],
+      blockchain: [],
+      slowdown: maxSlowdown,
+      timeCost: 100
     }
     this.newTransaction = this.newTransaction.bind(this);
+    this.newBlock = this.newBlock.bind(this);
+    this.cost = this.cost.bind(this);
+    this.updateState = this.updateState.bind(this);
+    this.newMiner = this.newMiner.bind(this);
+    this.updateSlowdown = this.updateSlowdown.bind(this);
   }
 
+
+
+  componentDidMount(){
+    this.setState({
+        clients: this.createClients(5),
+        miners: this.createMiners(5),
+    })
+    setInterval(this.newMiner, this.state.slowdown);
+  }
+
+
+
+
+  mainContainer={
+    display: 'flex',
+    flexDirection: 'column',
+    backgroundColor: 'silver',
+    height: '100vh'
+  };
 
   container={
     display: 'flex',
     flexDirection: 'row',
+    height: '90%',
     backgroundColor: 'silver',
-    height: '100vh'
   };
 
   columnContainer={
@@ -87,36 +162,65 @@ class App extends Component {
     const clients = this.state.clients;
     const miners = this.state.miners;
     const transactions = this.state.transactions;
+    const blockchain = this.state.blockchain;
+
     return (
-      <div className="App" style={this.container}>
-        <div style={this.columnContainer}>
+      <div style={this.mainContainer}>
+        <input id='speedSlider' type="range" min={0} max={maxSlowdown} defaultValue={100} onInput={this.updateSlowdown}/>
+        <div  style={this.container}>
+          <ReactSlider />
+          <div style={this.columnContainer}>
 
-          Clients:
-          <div style={this.rowContainer}>
-            <ul>
-              {clients.map((client, key) =>
-              <li key={key}><Client key={key} newTransaction={this.newTransaction} data={client} clients={clients}/></li>
+            Clients ({this.state.clients.length}):
+            <div style={this.rowContainer}>
+              <ul>
+                {clients.map((client, key) =>
+                  <li key={key}><Client
+                    slowdown={this.state.slowdown}
+                    newTransaction={this.newTransaction}
+                    data={client}
+                    clients={clients}/>
+                  </li>
+                )}
+              </ul>
+            </div>
+            Current Transactions ({this.state.transactions.length}):
+            <div style={this.rowContainer}>
+              <ul>
+              {transactions.map((transaction, key) =>
+              <li key={key}><Transaction data={transaction}/></li>
               )}
-            </ul>
-          </div>
-          Current Transactions:
-          <div style={this.rowContainer}>
-            <ul>
-            {transactions.map((transaction, key) =>
-            <li key={key}><Transaction data={transaction}/></li>
-            )}
-            </ul>
-          </div>
+              </ul>
+            </div>
 
-        </div>
-        <div style={this.columnContainer}>
-          Miners:
-          <div style={this.rowContainer}>
-            <ul>
-              {miners.map((data, key) =>
-              <li key={key}><Miner  data={data}/></li>
-              )}
-            </ul>
+          </div>
+          <div style={this.columnContainer}>
+            Miners ({this.state.miners.length}):
+            <div style={this.rowContainer}>
+              <ul>
+                {miners.map((data, key) =>
+                  <li key={key}><Miner
+                    updateState={this.updateState}
+                    transactions={transactions}
+                    newBlock={this.newBlock}
+                    cost={this.cost}
+                    blockchain={blockchain}
+                    timeCost={this.state.timeCost}
+                    slowdown={this.state.slowdown}
+                    data={data}/>
+                  </li>
+                )}
+              </ul>
+            </div>
+            Blockchain ({this.state.blockchain.length}):
+            <div style={this.rowContainer}>
+              <ul>
+                {blockchain.map((data, key) =>
+                <li key={key}><Block data={data}/></li>
+                )}
+              </ul>
+            </div>
+
           </div>
         </div>
       </div>

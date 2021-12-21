@@ -5,9 +5,6 @@ import {Component} from 'react';
 class Transaction extends Component {
 
 
-  constructor(props){
-    super(props);
-  }
 
   render() {
 
