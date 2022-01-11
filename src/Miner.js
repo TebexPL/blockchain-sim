@@ -46,14 +46,15 @@ class Miner extends Component {
       setTimeout(this.mine, 100);
   }
 
+
   render() {
 
     const data = this.props.data;
     return (
-      <div>
-        ID: {data.id}<br />
-        Balance: {data.balance}<br />
-        Resources: {data.resources}
+      <div style={this.props.boxStyle}>
+        ID: {data.id.substr(0, 10)}<br />
+        Balance: {Math.round(data.balance*100)/100}<br />
+      Resources: {Math.round(data.resources*100)/100}
 
       </div>
     )

@@ -27,7 +27,7 @@ class App extends Component {
   };
 
   createMiner(){
-    let id = sha256(Math.random().toString());
+    let id = sha256("MINER"+Date.now()+Math.random().toString());
     let balance = Math.round(Math.random()%100*10000)/100;
     let resources = Math.round(Math.random()%100*10000)/100;
     return {id, balance, resources};
@@ -90,24 +90,37 @@ class App extends Component {
     this.setState({});
   }
 
+  addClient(){
+    this.state.clients.push(this.createClient())
+    this.setState({});
+  }
 
+  deleteClient(clientId){
+    let clientIndex = this.state.clients
+          .findIndex(x => x.id === clientId)
+    this.state.clients.splice(clientIndex, 1);
+    this.setState({});
+  }
 
 
   constructor(props){
     super(props);
     this.state = {
+      location: 'clients',
       clients: [],
       miners: [],
       transactions: [],
       blockchain: [],
       slowdown: maxSlowdown,
-      timeCost: 100
+      timeCost: 100,
+      addClientHover: false
     }
     this.newTransaction = this.newTransaction.bind(this);
     this.newBlock = this.newBlock.bind(this);
     this.cost = this.cost.bind(this);
     this.updateState = this.updateState.bind(this);
     this.newMiner = this.newMiner.bind(this);
+    this.deleteClient = this.deleteClient.bind(this)
   }
 
 
@@ -122,35 +135,76 @@ class App extends Component {
 
 
 
-
-  mainContainer={
-    display: 'flex',
-    flexDirection: 'column',
-    backgroundColor: 'silver',
-    height: '100vh'
-  };
-
-  container={
+  header = {
     display: 'flex',
     flexDirection: 'row',
-    height: '100%',
-    backgroundColor: 'silver',
-  };
+    position: 'fixed',
+    backgroundColor: 'grey',
+    height: '50px',
+    width: '100%'
+  }
 
-  columnContainer={
+  navLink={
     display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     flex:1,
-    flexDirection: 'column',
+    color: 'lightgrey',
+    textDecoration: 'none',
+
+  }
+  navLinkSelected={
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flex:1,
+    color: 'black',
+    backgroundColor: 'silver',
+    textDecoration: 'none',
+  }
+  section={
+    flexDirection: 'column'
+  }
+
+  contentBox={
+    width: '100%',
+    minHeight: '91.8vh',
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'start',
+    backgroundColor: 'silver'
 
   }
 
-  rowContainer={
-    display:'flex',
-    flexDirection: 'column',
-    height: '45%',
-    overflow: 'auto',
+  boxStyle={
+    margin: '1.4%',
+    width: '17%',
+    height: '200px',
+    borderWidth: '1px',
+    borderColor: 'black',
+    borderStyle: 'solid',
+    borderRadius: 10,
     backgroundColor: 'lightgrey',
-    margin: 3
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column'
+  }
+
+  boxStyleHover={
+    margin: '1.4%',
+    width: '17%',
+    height: '200px',
+    borderWidth: '1px',
+    borderColor: 'black',
+    borderStyle: 'solid',
+    borderRadius: 10,
+    backgroundColor: 'white',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'column'
   }
 
 
@@ -159,66 +213,80 @@ class App extends Component {
     const miners = this.state.miners;
     const transactions = this.state.transactions;
     const blockchain = this.state.blockchain;
-
+    const location = this.state.location;
     return (
-      <div style={this.mainContainer}>
-        <div  style={this.container}>
-          <ReactSlider />
-          <div style={this.columnContainer}>
+        <div>
+        <nav style={this.header}>
+          <a href="#clients" onClick={() => this.setState({location: 'clients'})} style={this.state.location=='clients'?this.navLinkSelected:this.navLink}>Clients({clients.length})</a>
+          <a href="#miners" onClick={() => this.setState({location: 'miners'})} style={this.state.location=='miners'?this.navLinkSelected:this.navLink}>Miners({miners.length})</a>
+          <a href="#transactions" onClick={() => this.setState({location: 'transactions'})} style={this.state.location=='transactions'?this.navLinkSelected:this.navLink}>Transactions({transactions.length})</a>
+          <a href="#blockchain" onClick={() => this.setState({location: 'blockchain'})} style={this.state.location=='blockchain'?this.navLinkSelected:this.navLink}>blockchain({blockchain.length})</a>
+        </nav>
+        <section id="clients" style={{flexDirection: 'column', display: location==='clients'?'flex' : 'none' }}>
+            <div style={{height: '50px',width: '100%'}}></div>
+            <div style={this.contentBox}>
+            {clients.map((client, key) =>
+              <Client key={key}
+                slowdown={this.state.slowdown}
+                newTransaction={this.newTransaction}
+                data={client}
+                clients={clients}
+                boxStyle={this.boxStyle}
+                boxStyleHover={this.boxStyleHover}
+                deleteMe={this.deleteClient}
+                />
 
-            Clients ({this.state.clients.length}):
-            <div style={this.rowContainer}>
-              <ul>
-                {clients.map((client, key) =>
-                  <li key={key}><Client
-                    slowdown={this.state.slowdown}
-                    newTransaction={this.newTransaction}
-                    data={client}
-                    clients={clients}/>
-                  </li>
-                )}
-              </ul>
+            )}
+            <div style={this.state.addClientHover?this.boxStyleHover:this.boxStyle}
+              onMouseEnter={() => this.setState({addClientHover: true})}
+              onMouseLeave={() => this.setState({addClientHover: false})}
+              onClick={() => this.addClient()}>
+              <p style={{fontSize: 70}}>+</p>
             </div>
-            Current Transactions ({this.state.transactions.length}):
-            <div style={this.rowContainer}>
-              <ul>
-              {transactions.map((transaction, key) =>
-              <li key={key}><Transaction data={transaction}/></li>
+            </div>
+        </section>
+        <section id="miners" style={{flexDirection: 'column', display: location==='miners'?'flex' : 'none' }}>
+            <div style={{height: '50px',width: '100%'}}></div>
+            <div style={this.contentBox}>
+              {miners.map((data, key) =>
+                <Miner key={key}
+                  updateState={this.updateState}
+                  transactions={transactions}
+                  newBlock={this.newBlock}
+                  cost={this.cost}
+                  blockchain={blockchain}
+                  timeCost={this.state.timeCost}
+                  slowdown={this.state.slowdown}
+                  data={data}
+                  boxStyle={this.boxStyle}
+                  boxStyleHover={this.boxStyleHover}/>
               )}
-              </ul>
             </div>
-
-          </div>
-          <div style={this.columnContainer}>
-            Miners ({this.state.miners.length}):
-            <div style={this.rowContainer}>
-              <ul>
-                {miners.map((data, key) =>
-                  <li key={key}><Miner
-                    updateState={this.updateState}
-                    transactions={transactions}
-                    newBlock={this.newBlock}
-                    cost={this.cost}
-                    blockchain={blockchain}
-                    timeCost={this.state.timeCost}
-                    slowdown={this.state.slowdown}
-                    data={data}/>
-                  </li>
-                )}
-              </ul>
+        </section>
+        <section id="transactions" style={{flexDirection: 'column', display: location==='transactions'?'flex' : 'none' }}>
+            <div style={{height: '50px',width: '100%'}}></div>
+            <div style={this.contentBox}>
+              {transactions.map((transaction, key) =>
+              <Transaction key={key}
+                data={transaction}
+                boxStyle={this.boxStyle}
+                boxStyleHover={this.boxStyleHover}/>
+              )}
             </div>
-            Blockchain ({this.state.blockchain.length}):
-            <div style={this.rowContainer}>
-              <ul>
-                {blockchain.map((data, key) =>
-                <li key={key}><Block data={data}/></li>
-                )}
-              </ul>
+        </section>
+        <section id="blockchain" style={{flexDirection: 'column', display: location==='blockchain'?'flex' : 'none' }}>
+            <div style={{height: '50px',width: '100%'}}></div>
+            <div style={this.contentBox}>
+              {blockchain.map((data, key) =>
+              <Block key={key}
+                      data={data}
+                      boxStyle={this.boxStyle}
+                      boxStyleHover={this.boxStyleHover}/>
+              )}
             </div>
-
-          </div>
-        </div>
+        </section>
       </div>
+
     );
   }
 
